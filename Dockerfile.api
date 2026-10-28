@@ -1,0 +1,10 @@
+FROM mcr.microsoft.com/playwright/python:v1.57.0-noble
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY src /app/src
+COPY pyproject.toml uv.lock README.md LICENSE.txt /app/
+RUN uv sync --frozen --no-dev --extra s3 && uv pip install --python .venv/bin/python flask gunicorn
+ENV PATH="/app/.venv/bin:$PATH"
+COPY api.py /app/api.py
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-8080} --timeout 900 --workers 1 --threads 2 api:app"]
